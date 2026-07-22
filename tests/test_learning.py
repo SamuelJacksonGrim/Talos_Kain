@@ -50,6 +50,7 @@ def test_run_is_reproducible(stores, tmp_path):
     from talos.infrastructure.storage.sqlite.wal import SqliteWAL
     from talos.services.organism import Talos
     from talos.services.reflection import Reflector
+    from talos.services.reward_engine import RewardEngine
     from talos.services.skill_extraction import SkillExtractor, SkillPublisher
 
     def build(tag):
@@ -59,6 +60,7 @@ def test_run_is_reproducible(stores, tmp_path):
         skills = SqliteSkillStore(d / "sk.db")
         self_model = SqliteSelfModelStore(d / "sm.db")
         audit = SqliteAuditStore(d / "au.db")
+        reward = RewardEngine()
         return Talos(
             env,
             SqliteWAL(d / "wal.db"),
@@ -66,9 +68,10 @@ def test_run_is_reproducible(stores, tmp_path):
             skills,
             self_model,
             audit,
-            SkillExtractor(episodes),
+            SkillExtractor(episodes, reward),
             SkillPublisher(skills, ConfidenceGate(), audit),
             Reflector(self_model),
+            reward,
             run_seed=42,
         )
 
