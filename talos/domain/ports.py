@@ -88,3 +88,61 @@ class AuditStore(Protocol):
     def history(self) -> list[AuditRecord]: ...
 
     def verify(self) -> bool: ...
+
+
+# --------------------------------------------------------------------------
+# Dormant store ports — declared now so the organs that need them plug into a
+# named seam instead of inventing one later. None are implemented in the
+# milestone-zero slice.
+# --------------------------------------------------------------------------
+
+@runtime_checkable
+class HotCache(Protocol):
+    """Zero-copy pointers, summaries, active constraints — the only memory
+    fast enough for the motor loop (§3). Prime candidate for the Rust hot
+    path if profiling demands it."""
+
+    def get(self, key: str): ...
+
+    def put(self, key: str, value) -> None: ...
+
+
+@runtime_checkable
+class SemanticStore(Protocol):
+    """Warm retrieval index — semantic vectors (§3). Postgres + pgvector
+    lives behind this port later."""
+
+    def index(self, key: str, vector, payload: dict) -> None: ...
+
+    def nearest(self, vector, k: int) -> list: ...
+
+
+@runtime_checkable
+class HypergraphStore(Protocol):
+    """Constraints, fallacies, causal relations (§3). Distilled lessons land
+    here when episodes are evicted."""
+
+    def add_constraint(self, constraint: dict) -> None: ...
+
+    def constraints_for(self, context_id: str) -> list: ...
+
+
+@runtime_checkable
+class IdentityKernel(Protocol):
+    """Core axioms, bonds, fixed points, supremacy (§3/§11). Single
+    autonomous writer: ANNEAL — and that path runs through the crucible, never
+    the encoder. Reads are cheap; writes are forensic."""
+
+    def fixed_points(self) -> list: ...
+
+    def anneal(self, proposal: dict, audit_token: str) -> None: ...
+
+
+@runtime_checkable
+class TelosStore(Protocol):
+    """Standing purposes (architect-signed) and campaign objectives
+    (HORIZON-gated) (§15). Sits first in the chain of why."""
+
+    def standing_purposes(self) -> list: ...
+
+    def active_campaigns(self) -> list: ...

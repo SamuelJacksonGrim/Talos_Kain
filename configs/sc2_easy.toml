@@ -1,0 +1,24 @@
+# SC2 first-milestone config (DORMANT).
+#
+# Placeholder for the StarCraft II run: beat the built-in AI on Easy, then
+# re-baseline at Medium (see talos/infrastructure/environments/sc2/curriculum.py).
+# Nothing consumes this yet — SC2Env is unimplemented. It exists so the shape
+# of an SC2 run is on record next to the mock config.
+
+[run]
+episodes = 200
+seed = 0
+
+[environment]
+kind = "sc2"
+
+[environment.sc2]
+map = "Simple64"
+opponent = "Easy"          # first milestone
+rebaseline_opponent = "Medium"
+realtime = false
+
+[gate]
+kind = "confidence"
+threshold = 0.75
+min_support = 3
