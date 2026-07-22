@@ -34,10 +34,11 @@ observe → score → choose → act → reward → record → learn
 - `services/motor.py` — actuate
 - `services/skill_extraction.py` — nominate candidates + gated publish
 - `services/reflection.py` — reflect after each episode, update the self-model (§11 tail)
+- `services/reward_engine.py` — prediction error / surprise; drives recovery (§5)
 - `domain/gate.py` — the one admission gate
 - `domain/reward.py` — valence
 - `infrastructure/storage/sqlite/{wal,episodic,skills,self_model,audit}.py` — the five stores
-- `infrastructure/environments/mock/mock_env.py` — the primary world
+- `infrastructure/environments/mock/mock_env.py` — the primary world (stationary, or drifting with `drift_every`)
 
 **Woken organs (were dormant, now live):**
 
@@ -48,6 +49,14 @@ observe → score → choose → act → reward → record → learn
   repeats a known loser and masters each context in at most (number of
   actions) tries. Identity-touching reflection still escalates to the dormant
   crucible rather than writing directly — that seam is where this organ ends.
+- **Reward engine (§5).** Turns each outcome into a prediction error. When a
+  *committed* belief (a published skill, or a self-model winner) fails, that is
+  the signal the world drifted: the organism demotes the stale skill (audited)
+  and resets its self-model belief so it re-explores. The engine's
+  recency-weighted value also gates consolidation, so a drifted-away winner is
+  never re-crowned on stale wins. This is what lets Talos hold a high win rate
+  in a **drifting world** instead of locking into confident failure —
+  demotion is the §7-monitor edge that arrives with it.
 
 ## What is dormant
 
@@ -62,8 +71,7 @@ only when gameplay justifies it. Notable dormant organs:
 | Federated cortex, context broker | `services/cortex.py`, `services/planner.py` | §2 |
 | Memory consolidation, eviction, dream | `services/consolidation.py` | §3, §8 |
 | Cerebellar reflex, ghost-pointer | `services/reflex.py` | §4 |
-| Limbic reward (streaming TD) | `services/reward_engine.py` | §5 |
-| Skill CI/shadow/canary/monitor | `services/skill_lifecycle.py` | §7 |
+| Skill CI / shadow / canary / monitor (demotion edge now live) | `services/skill_lifecycle.py` | §7 |
 | Sleep / wake machinery | `services/sleep.py` | §1, §8, §9 |
 | Identity crucible | `services/identity_crucible.py` | §10, §11 |
 | Metacognition, offline evolution | `services/metacognition.py` | §12 |

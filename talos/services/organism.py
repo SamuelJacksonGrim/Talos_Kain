@@ -36,6 +36,7 @@ from talos.domain.types import Episode, Step
 from talos.services.motor import Motor
 from talos.services.policy import Policy
 from talos.services.reflection import Reflector
+from talos.services.reward_engine import RewardEngine
 from talos.services.sensorium import Sensorium
 from talos.services.skill_extraction import SkillExtractor, SkillPublisher
 
@@ -47,6 +48,7 @@ class EpisodeReport:
     action_id: int
     won: bool
     decision_source: str  # "skill" | "self_model" | "explore"
+    recovered: bool = False  # a reward-surprise triggered drift recovery here
 
 
 class Talos:
@@ -61,6 +63,7 @@ class Talos:
         extractor: SkillExtractor,
         publisher: SkillPublisher,
         reflector: Reflector,
+        reward: RewardEngine,
         run_id: str | None = None,
         run_seed: int = 0,
     ):
@@ -73,6 +76,7 @@ class Talos:
         self._extractor = extractor
         self._publisher = publisher
         self._reflector = reflector
+        self._reward = reward
         self._sensorium = Sensorium()
         self._policy = Policy(skills, self_model)
         self._motor = Motor(env)
@@ -122,6 +126,24 @@ class Talos:
         # reflect: update the organism's model of itself for this context.
         self._reflector.reflect(episode)
 
+        # reward: prediction error modulates the system. A confidently-good
+        # action that just failed is the signal that the world moved under us.
+        prediction_error = self._reward.observe(
+            observation.context_id, action.action_id, result.reward
+        )
+        recovered = False
+        if self._reward.is_surprise(prediction_error):
+            self._recover(observation.context_id, action.action_id)
+            recovered = True
+        self._wal.append(
+            "reward",
+            {
+                "context_id": observation.context_id,
+                "prediction_error": prediction_error,
+                "recovered": recovered,
+            },
+        )
+
         # learn: nominate a candidate; the publisher decides via the gate.
         candidate = self._extractor.nominate(observation.context_id)
         if candidate is not None:
@@ -133,7 +155,33 @@ class Talos:
             action_id=action.action_id,
             won=is_win(result),
             decision_source=source,
+            recovered=recovered,
         )
+
+    def _recover(self, context_id: str, failed_action: int) -> None:
+        """A trusted action failed — the world drifted. Demote the stale skill
+        (audited: removing a behavior-shaping capability is a governance event)
+        and reset the self-model belief so the policy re-explores. The
+        publisher forgets its memo so the replacement can be published."""
+        skill = self._skills.for_context(context_id)
+        if skill is not None:
+            self._skills.retire(skill.skill_id)
+            self._audit.record(
+                "skill.demotion",
+                {
+                    "context_id": context_id,
+                    "skill_id": skill.skill_id,
+                    "reason": "reward_surprise",
+                    "failed_action": failed_action,
+                },
+            )
+        self._publisher.forget(context_id)
+
+        entry = self._self_model.get(context_id)
+        if entry is not None:
+            entry.winning_action = None
+            entry.tried_actions = ()
+            self._self_model.put(entry)
 
 
 def main() -> None:
@@ -157,21 +205,34 @@ def main() -> None:
     parser.add_argument("--contexts", type=int, default=4)
     parser.add_argument("--actions", type=int, default=6)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument(
+        "--drift-every",
+        type=int,
+        default=0,
+        help="episodes between drift events (0 = stationary world)",
+    )
     args = parser.parse_args()
 
     tmp = Path(tempfile.mkdtemp(prefix="talos_mock_"))
-    env = MockEnv(n_contexts=args.contexts, n_actions=args.actions, env_seed=args.seed)
+    env = MockEnv(
+        n_contexts=args.contexts,
+        n_actions=args.actions,
+        env_seed=args.seed,
+        drift_every=args.drift_every,
+    )
     wal = SqliteWAL(tmp / "wal.db")
     episodes = SqliteEpisodeStore(tmp / "episodic.db")
     skills = SqliteSkillStore(tmp / "skills.db")
     audit = SqliteAuditStore(tmp / "audit.db")
     self_model = SqliteSelfModelStore(tmp / "self_model.db")
-    extractor = SkillExtractor(episodes)
+    reward = RewardEngine()
+    extractor = SkillExtractor(episodes, reward)
     publisher = SkillPublisher(skills, ConfidenceGate(), audit)
     reflector = Reflector(self_model)
 
     talos = Talos(
-        env, wal, episodes, skills, self_model, audit, extractor, publisher, reflector,
+        env, wal, episodes, skills, self_model, audit,
+        extractor, publisher, reflector, reward,
         run_seed=args.seed,
     )
     reports = talos.run(args.episodes)
@@ -189,6 +250,8 @@ def main() -> None:
         print(f"  - {s.name}  (confidence={s.confidence:.2f}, from {len(s.provenance)} games)")
     mastered = [e for e in self_model.all() if e.mastered]
     print(f"contexts mastered: {len(mastered)} / {args.contexts}  (self-model)")
+    recoveries = sum(1 for r in reports if r.recovered)
+    print(f"drifts / recover : {env.drifts} / {recoveries}  (reward-surprise)")
     print(f"audit ledger ok  : {audit.verify()}  ({len(audit.history())} records)")
     print(f"(temporary stores under {tmp})")
 
