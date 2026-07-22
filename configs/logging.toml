@@ -1,0 +1,15 @@
+# Logging configuration.
+#
+# Milestone zero configures logging in code (talos/infrastructure/telemetry/
+# logging.py). This file is the seam for declarative log config — levels per
+# logger, handlers, formats — when runs get complex enough to want it without
+# a code change.
+
+[logging]
+level = "INFO"
+format = "%(asctime)s %(levelname)-7s %(name)s: %(message)s"
+
+[loggers]
+talos = "INFO"
+"talos.services" = "INFO"
+"talos.infrastructure" = "WARNING"
