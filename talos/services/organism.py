@@ -27,6 +27,7 @@ from talos.domain.ports import (
     AuditStore,
     Environment,
     EpisodeStore,
+    SelfModelStore,
     SkillStore,
     WALStore,
 )
@@ -34,6 +35,7 @@ from talos.domain.reward import is_win
 from talos.domain.types import Episode, Step
 from talos.services.motor import Motor
 from talos.services.policy import Policy
+from talos.services.reflection import Reflector
 from talos.services.sensorium import Sensorium
 from talos.services.skill_extraction import SkillExtractor, SkillPublisher
 
@@ -44,7 +46,7 @@ class EpisodeReport:
     context_id: str
     action_id: int
     won: bool
-    decision_source: str  # "skill" | "memory" | "explore"
+    decision_source: str  # "skill" | "self_model" | "explore"
 
 
 class Talos:
@@ -54,9 +56,11 @@ class Talos:
         wal: WALStore,
         episodes: EpisodeStore,
         skills: SkillStore,
+        self_model: SelfModelStore,
         audit: AuditStore,
         extractor: SkillExtractor,
         publisher: SkillPublisher,
+        reflector: Reflector,
         run_id: str | None = None,
         run_seed: int = 0,
     ):
@@ -64,11 +68,13 @@ class Talos:
         self._wal = wal
         self._episodes = episodes
         self._skills = skills
+        self._self_model = self_model
         self._audit = audit
         self._extractor = extractor
         self._publisher = publisher
+        self._reflector = reflector
         self._sensorium = Sensorium()
-        self._policy = Policy(episodes, skills)
+        self._policy = Policy(skills, self_model)
         self._motor = Motor(env)
         self.run_id = run_id or uuid.uuid4().hex[:12]
         self._run_seed = run_seed
@@ -113,6 +119,9 @@ class Talos:
         )
         self._episodes.save(episode)
 
+        # reflect: update the organism's model of itself for this context.
+        self._reflector.reflect(episode)
+
         # learn: nominate a candidate; the publisher decides via the gate.
         candidate = self._extractor.nominate(observation.context_id)
         if candidate is not None:
@@ -139,6 +148,7 @@ def main() -> None:
     from talos.infrastructure.environments.mock.mock_env import MockEnv
     from talos.infrastructure.storage.sqlite.audit import SqliteAuditStore
     from talos.infrastructure.storage.sqlite.episodic import SqliteEpisodeStore
+    from talos.infrastructure.storage.sqlite.self_model import SqliteSelfModelStore
     from talos.infrastructure.storage.sqlite.skills import SqliteSkillStore
     from talos.infrastructure.storage.sqlite.wal import SqliteWAL
 
@@ -155,10 +165,15 @@ def main() -> None:
     episodes = SqliteEpisodeStore(tmp / "episodic.db")
     skills = SqliteSkillStore(tmp / "skills.db")
     audit = SqliteAuditStore(tmp / "audit.db")
+    self_model = SqliteSelfModelStore(tmp / "self_model.db")
     extractor = SkillExtractor(episodes)
     publisher = SkillPublisher(skills, ConfidenceGate(), audit)
+    reflector = Reflector(self_model)
 
-    talos = Talos(env, wal, episodes, skills, audit, extractor, publisher, run_seed=args.seed)
+    talos = Talos(
+        env, wal, episodes, skills, self_model, audit, extractor, publisher, reflector,
+        run_seed=args.seed,
+    )
     reports = talos.run(args.episodes)
 
     window = max(1, args.episodes // 10)
@@ -172,6 +187,8 @@ def main() -> None:
     print(f"skills grown     : {len(grown)}")
     for s in grown:
         print(f"  - {s.name}  (confidence={s.confidence:.2f}, from {len(s.provenance)} games)")
+    mastered = [e for e in self_model.all() if e.mastered]
+    print(f"contexts mastered: {len(mastered)} / {args.contexts}  (self-model)")
     print(f"audit ledger ok  : {audit.verify()}  ({len(audit.history())} records)")
     print(f"(temporary stores under {tmp})")
 

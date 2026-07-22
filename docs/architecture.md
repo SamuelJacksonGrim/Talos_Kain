@@ -30,13 +30,24 @@ observe → score → choose → act → reward → record → learn
 
 - `services/organism.py` — the loop (`Talos`)
 - `services/sensorium.py` — perceive + trivial salience
-- `services/policy.py` — action selection (skill → memory → explore)
+- `services/policy.py` — action selection (skill → self-model → systematic exploration)
 - `services/motor.py` — actuate
 - `services/skill_extraction.py` — nominate candidates + gated publish
+- `services/reflection.py` — reflect after each episode, update the self-model (§11 tail)
 - `domain/gate.py` — the one admission gate
 - `domain/reward.py` — valence
-- `infrastructure/storage/sqlite/{wal,episodic,skills,audit}.py` — the four stores
+- `infrastructure/storage/sqlite/{wal,episodic,skills,self_model,audit}.py` — the five stores
 - `infrastructure/environments/mock/mock_env.py` — the primary world
+
+**Woken organs (were dormant, now live):**
+
+- **Self-model + reflection (§11 tail).** The organism models *itself* — per
+  context, what it has tried, what wins, how sure it is (`SELFSTORE`). The
+  reflection pass updates it after every episode; the policy reads it to
+  explore by systematic elimination instead of blind guessing, so it never
+  repeats a known loser and masters each context in at most (number of
+  actions) tries. Identity-touching reflection still escalates to the dormant
+  crucible rather than writing directly — that seam is where this organ ends.
 
 ## What is dormant
 
