@@ -45,9 +45,11 @@ def test_run_is_reproducible(stores, tmp_path):
     from talos.infrastructure.environments.mock.mock_env import MockEnv
     from talos.infrastructure.storage.sqlite.audit import SqliteAuditStore
     from talos.infrastructure.storage.sqlite.episodic import SqliteEpisodeStore
+    from talos.infrastructure.storage.sqlite.self_model import SqliteSelfModelStore
     from talos.infrastructure.storage.sqlite.skills import SqliteSkillStore
     from talos.infrastructure.storage.sqlite.wal import SqliteWAL
     from talos.services.organism import Talos
+    from talos.services.reflection import Reflector
     from talos.services.skill_extraction import SkillExtractor, SkillPublisher
 
     def build(tag):
@@ -55,15 +57,18 @@ def test_run_is_reproducible(stores, tmp_path):
         env = MockEnv(n_contexts=4, n_actions=6, env_seed=3)
         episodes = SqliteEpisodeStore(d / "ep.db")
         skills = SqliteSkillStore(d / "sk.db")
+        self_model = SqliteSelfModelStore(d / "sm.db")
         audit = SqliteAuditStore(d / "au.db")
         return Talos(
             env,
             SqliteWAL(d / "wal.db"),
             episodes,
             skills,
+            self_model,
             audit,
             SkillExtractor(episodes),
             SkillPublisher(skills, ConfidenceGate(), audit),
+            Reflector(self_model),
             run_seed=42,
         )
 

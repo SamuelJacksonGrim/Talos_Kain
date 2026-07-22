@@ -109,6 +109,37 @@ class Skill:
 
 
 # --------------------------------------------------------------------------
+# Self-model (the organism modeling itself)
+# --------------------------------------------------------------------------
+
+@dataclass
+class SelfModelEntry:
+    """The organism's model of *itself* for one context: what it has tried,
+    what works, and how sure it is — strengths, blind spots, calibration (§11).
+
+    Distinct from a Skill. A Skill is a published, gated capability. A
+    SelfModelEntry is metacognition: a consolidated read of the organism's own
+    track record that shapes where it still needs to explore. It is derived
+    from logged experience, so it is a summary of fact, not an autonomous
+    behavior injection — which is why it does not pass through the gate.
+    """
+
+    context_id: str
+    attempts: int = 0
+    wins: int = 0
+    tried_actions: tuple[int, ...] = ()
+    winning_action: Optional[int] = None
+
+    @property
+    def confidence(self) -> float:
+        return self.wins / self.attempts if self.attempts else 0.0
+
+    @property
+    def mastered(self) -> bool:
+        return self.winning_action is not None
+
+
+# --------------------------------------------------------------------------
 # Governance
 # --------------------------------------------------------------------------
 
