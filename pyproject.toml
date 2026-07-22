@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "talos-kain"
+version = "0.0.1"
+description = "Talos_Kain — the organism: a governed, continuously-learning autonomous-agent harness. Milestone-zero vertical slice."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "Samuel Grim" }]
+
+# Milestone zero has zero third-party runtime dependencies on purpose:
+# the vertical slice runs against a deterministic mock environment using
+# only the standard library. Heavy deps (pysc2, torch, ...) arrive with
+# the organs that justify them.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+# Reserved, dormant until the organ that needs it wakes up:
+sc2 = []      # pysc2 / burnysc2 + the StarCraft II binary
+learn = []    # torch, and the §12 fine-tune / eval stack
+
+[project.scripts]
+talos-mock = "talos.services.organism:main"
+
+[tool.setuptools.packages.find]
+include = ["talos*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,5 @@
+# Empty workspace, on purpose. No members until the profiler justifies one.
+# See rust/README.md.
+[workspace]
+resolver = "2"
+members = []

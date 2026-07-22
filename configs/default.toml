@@ -1,0 +1,30 @@
+# Static configuration for the Talos_Kain organism.
+#
+# This is *static* config — knobs that shape a run before it starts. Runtime
+# organism state (what it has learned, its self-model) lives in the SQLite
+# stores, never here.
+
+[run]
+episodes = 400
+seed = 0
+
+[environment]
+kind = "mock"          # "mock" (primary) | "sc2" (dormant)
+
+[environment.mock]
+contexts = 4
+actions = 6
+env_seed = 0
+
+[gate]
+kind = "confidence"    # "confidence" | "always_admit"
+threshold = 0.75
+min_support = 3
+
+[storage]
+# Separate files per store = bulkhead containment. Paths are relative to the
+# run directory created at launch.
+wal = "wal.db"
+episodic = "episodic.db"
+skills = "skills.db"
+audit = "audit.db"
