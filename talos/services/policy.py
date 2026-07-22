@@ -1,68 +1,56 @@
 """Policy: action selection.
 
-Slice of §2/§4 (cortex → basal-ganglia action selection). The decision order
+Slice of §2/§4 (cortex -> basal-ganglia action selection). The decision order
 encodes the whole point of the milestone — that behavior improves because the
-organism *remembers* and *grows skills*:
+organism *remembers*, *grows skills*, and now *models itself*:
 
     1. Published skill for this context?  -> exploit it (the grown capability).
-    2. Else, episodic memory of a past win here? -> exploit that action.
-    3. Else -> explore (seeded, reproducible).
+    2. Else, self-model knows the winning action here? -> exploit it.
+    3. Else, explore an action the self-model has NOT already tried and lost
+       (systematic elimination) -> only fall back to a blind guess if every
+       action has been tried.
 
-Because the mock world is deterministic, once a context's winning action is
-known the greedy choice is optimal; exploration only happens on genuinely
-unseen contexts. That makes the learning curve honest and reproducible: every
-choice is a function of (seed, history), nothing hidden.
+Step 3 is what the self-model organ bought. Before it, exploration was a blind
+guess that could re-pick an action already known to lose, wasting episodes.
+Now the organism reads its own track record and never repeats a known loser,
+so it masters each context in at most (number of actions) tries instead of an
+unbounded random walk. Every choice remains a function of (seed, history),
+nothing hidden, so the curve stays reproducible.
 """
 
 from __future__ import annotations
 
 import random
 
-from talos.domain.ports import EpisodeStore, SkillStore
+from talos.domain.ports import SelfModelStore, SkillStore
 from talos.domain.types import Action, Observation
 
 
 class Policy:
-    def __init__(self, episodes: EpisodeStore, skills: SkillStore):
-        self._episodes = episodes
+    def __init__(self, skills: SkillStore, self_model: SelfModelStore):
         self._skills = skills
+        self._self_model = self_model
 
     def choose(self, observation: Observation, rng: random.Random) -> tuple[Action, str]:
         """Return the chosen action and a short provenance tag describing why
-        (``skill`` / ``memory`` / ``explore``) — useful for telemetry and for
-        the tests that assert learning came from the intended source."""
+        (``skill`` / ``self_model`` / ``explore``) — useful for telemetry and
+        for the tests that assert learning came from the intended source."""
 
-        # 1. Grown skill takes precedence over raw memory.
+        # 1. Grown skill takes precedence.
         skill = self._skills.for_context(observation.context_id)
         if skill is not None and skill.action_id in observation.available_actions:
             return Action(skill.action_id), "skill"
 
-        # 2. Episodic memory: best win-rate action for this context.
-        best = self._best_remembered_action(observation)
-        if best is not None and best in observation.available_actions:
-            return Action(best), "memory"
+        entry = self._self_model.get(observation.context_id)
+        if entry is not None:
+            # 2. Self-model already found the winner here.
+            if entry.winning_action is not None and entry.winning_action in observation.available_actions:
+                return Action(entry.winning_action), "self_model"
 
-        # 3. Explore, seeded for reproducibility.
+            # 3. Systematic elimination: try something not yet tried.
+            untried = [a for a in observation.available_actions if a not in entry.tried_actions]
+            if untried:
+                return Action(rng.choice(untried)), "explore"
+
+        # First visit to this context, or everything tried: blind guess.
         return Action(rng.choice(observation.available_actions)), "explore"
-
-    def _best_remembered_action(self, observation: Observation) -> int | None:
-        wins: dict[int, int] = {}
-        plays: dict[int, int] = {}
-        for ep in self._episodes.by_context(observation.context_id):
-            if not ep.steps:
-                continue
-            action_id = ep.steps[0].action.action_id
-            plays[action_id] = plays.get(action_id, 0) + 1
-            if ep.outcome == "win":
-                wins[action_id] = wins.get(action_id, 0) + 1
-
-        if not plays:
-            return None
-
-        # Prefer an action with a recorded win; break ties by win rate.
-        best_action, best_rate = None, -1.0
-        for action_id, n in plays.items():
-            rate = wins.get(action_id, 0) / n
-            if wins.get(action_id, 0) > 0 and rate > best_rate:
-                best_action, best_rate = action_id, rate
-        return best_action

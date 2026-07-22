@@ -18,6 +18,7 @@ from talos.domain.types import (
     AuditRecord,
     Episode,
     Observation,
+    SelfModelEntry,
     Skill,
     StepResult,
 )
@@ -75,6 +76,20 @@ class SkillStore(Protocol):
     def all(self) -> list[Skill]: ...
 
     def retire(self, skill_id: str) -> None: ...
+
+
+@runtime_checkable
+class SelfModelStore(Protocol):
+    """Strengths, blind spots, habits, calibration (§3 SELFSTORE). Written by
+    the reflection pass, read by the policy to decide where it still needs to
+    explore. Not gated: it is a consolidated summary of logged fact, not an
+    autonomous behavior injection."""
+
+    def get(self, context_id: str) -> Optional[SelfModelEntry]: ...
+
+    def put(self, entry: SelfModelEntry) -> None: ...
+
+    def all(self) -> list[SelfModelEntry]: ...
 
 
 @runtime_checkable
