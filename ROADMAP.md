@@ -49,39 +49,53 @@ episodes         : 400  (contexts=4, actions=6)
 win rate  first   40: 80.00%   ->   last 40: 100.00%
 skills grown     : 4      (named, with confidence and provenance)
 contexts mastered: 4 / 4  (self-model)
+drifts / recover : 0 / 0  (reward-surprise)
 audit ledger ok  : True   (chain verified)
 ```
 
 That is the north-star test — measurably learns, names the skill it grew —
-passing against a deterministic mock. Also shipped: typed stubs for every v7
-section (§0–§15), SQLite implementations for each memory tier, an SC2
-environment and curriculum shell, and four test modules.
+passing against a mock. Also shipped: typed stubs for every v7 section (§0–§15),
+SQLite implementations for each memory tier, an SC2 environment and curriculum
+shell, 21 tests, and two **woken organs** — the self-model (§11 tail) and the
+reward engine (§5), which lets the organism recover from a drifting world
+instead of locking into confident failure.
 
 ---
 
-## T2 — The spec becomes falsifiable (current)
+## T2 — Mature the learning architecture on the mock (current)
 
-The point of this tier is that the document can be *wrong in public*.
+**The governing rule, from [`docs/BACKLOG.md`](docs/BACKLOG.md): organs wake
+only when gameplay exposes the need, not on speculation.** So this tier is
+ordered by forcing function, and the mock world is the cheap place to find them.
 
-**Shipped**
-- `tools/mermaid_graph.py` — parses the cornerstone's flowchart. 157 nodes, 308 edges.
-- `tools/invariant_lint.py` — asserts I1, I2, I4, I8, I10, I11, I12 against that
-  graph. `--audit` reproduces the v5/v6 write-path ratios mechanically;
-  `--growth` runs the dual: which stores have a drain.
-- **B4 closed** — crucible stage count corrected against the diagram.
+1. **Stochastic world.** Outcomes stop being deterministic. Highest value,
+   because it forces two things at once: the recovery trigger has to move from
+   surprise-threshold to **value-collapse** (which distinguishes an unlucky loss
+   from a stale belief), and value learning has to become a real running
+   estimate rather than a binary winner.
+2. **Multi-step episodes.** Unlocks credit assignment, TD error over a
+   trajectory, and makes the cerebellar reflex and motor-yield meaningful —
+   there is nothing to yield *to* in a one-step world.
 
-**Open — this is v8**
-1. **B1** split `CTRL` → `CTRL_OPS` / `CTRL_CONFIG`
-2. **B1a** reroute META's seven lateral edges to `CTRL_CONFIG`
-3. **B1b** config epochs (precompiled delta + pointer swap, per §9)
-4. **B2** governor on `CTRL_OPS`
-5. **B3** rewrite I10 without the word "tuning"
-6. **B5** threat model: governor-as-proxy, config shadow writes, amend
-   wake-state executive compromise
-7. **B6** the grounding paragraph — written last, placed first
+**Exit criterion:** the organism still learns, and still names what it learned,
+when outcomes are noisy and rewards are delayed. That is the difference between
+a learner and a lookup table, and it is the last thing the mock can teach.
 
-**Exit criterion:** `invariant_lint.py` exits 0, and every invariant it *can't*
-check is listed as such in the document rather than implied to hold.
+### Maintenance lane, riding alongside
+
+The cornerstone's invariants are executable now (`tools/invariant_lint.py`), and
+the linter exits 1. Under the forcing-function rule, only the items whose fix
+stops being cheap belong here — see **Spec & governance** in the backlog:
+
+- **META has no edge to `CTRL`**, and the `CTRL` split it requires, and the I10
+  rewrite that follows. Forcing function: **before §12 metacognition wakes**,
+  because `metacognition.py` is dormant and fixing the spec now costs an edit.
+- **Lint the code, not just the diagram.** Forcing function: the next organ
+  waking, since every waking is a chance for spec and code to diverge silently.
+
+The governor, the threat-model entries and the grounding paragraph are deferred
+in the backlog with the reason written down. **This lane is maintenance. It is
+not the road, and it will take everything it is given.**
 
 **Why now:** B1, B1a and B3 are corrections to how self-modification is gated,
 and `talos/services/metacognition.py` has not been written against them yet.
