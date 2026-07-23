@@ -7,6 +7,19 @@ The organism, from specification to something that runs. Work items live in
 **Current position: T2.** The spine runs on a mock environment and the
 cornerstone is mechanically checkable for the first time. One invariant fails.
 
+## How tiers are judged
+
+Against the north star — **learn by losing, and be able to show it** — not
+against their own artifacts. A tier that produces a cleaner document, a greener
+lint, or a tidier backlog has produced maintenance. The question for every tier
+is what it lets the organism *fail at, survive, and learn from* that it couldn't
+before.
+
+Tiers T2 through T4 are governance and hygiene. They are real work and they are
+not the road. They earn their place by being cheap now and expensive later, and
+each one below says why. If a tier can't answer that question, it should be
+deferred behind the organs.
+
 ---
 
 ## T0 — The cornerstone (shipped)
@@ -70,6 +83,14 @@ The point of this tier is that the document can be *wrong in public*.
 **Exit criterion:** `invariant_lint.py` exits 0, and every invariant it *can't*
 check is listed as such in the document rather than implied to hold.
 
+**Why now:** B1, B1a and B3 are corrections to how self-modification is gated,
+and `talos/services/metacognition.py` has not been written against them yet.
+Fixing the spec now costs an edit; fixing it after the module exists costs a
+refactor of the machinery the whole governance argument rests on. B2, B5 and B6
+are prose — they can wait, and they will be better written once there is code to
+check them against. **Timebox this tier.** It is the most comfortable pile to
+work in and it will take everything it is given.
+
 ---
 
 ## T3 — Lint the territory, not just the map (B10)
@@ -87,6 +108,11 @@ to prevent, one level down.
 **Exit criterion:** every invariant is enforced by something that runs — lint
 for topology, tests for behaviour — with the unenforceable ones named.
 
+**Why it serves learning:** an organism that learns unattended is one whose
+gates nobody is watching in real time. The gates have to hold by construction or
+the whole premise of running it for a long time alone is a hope. This is the
+tier that turns the governing law from a claim into a property.
+
 ---
 
 ## T4 — Growth stories (B7)
@@ -103,6 +129,13 @@ system and the last thing a short demo would reveal.
 
 **Exit criterion:** every store is either bounded, or documented as deliberately
 unbounded with the reason written down.
+
+**Why it serves learning:** learning by losing means accumulating an enormous
+number of losses. Every one of them lands in `EPI`, and the crucible replays
+through `EPI`. Unbounded growth is not a tidiness problem here — it is the
+mechanism by which a system that loses a lot gradually becomes unable to learn
+from it. This tier is the price of the north star being *repeated* failure
+rather than a demo.
 
 ---
 
