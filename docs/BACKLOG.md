@@ -16,6 +16,14 @@ a gap the document itself names as open.
   `POISON` into lineage and `CONTINUITY` into the counterfactual.
   *Closed 2026-07-23.*
 
+- **B12 · Dev environment, and the suite actually passes.** `pytest` is an
+  optional `[dev]` extra and wasn't installed in the WSL checkout, so `tests/`
+  had never been run from that side. Set up and run: **16 passed in 18.64s** —
+  `test_gate`, `test_audit_chain`, `test_learning`, `test_self_model`. Nothing
+  was broken. Local `.venv/` (gitignored); run with
+  `.venv/bin/python -m pytest -q`.
+  *Closed 2026-07-23.*
+
 - **B0 · The invariants are now executable.** `tools/mermaid_graph.py` parses
   the cornerstone's flowchart; `tools/invariant_lint.py` asserts I1, I2, I4, I8,
   I10, I11, I12 against it, with `--audit` (write-path ratios) and `--growth`
@@ -139,10 +147,7 @@ a gap the document itself names as open.
   inherit the same missing-drain gap, or quietly solved it, is unchecked. Check
   before designing the fix — the code may already be ahead of the spec here.
 
-- **B12 · Dev environment.** `pytest` is an optional extra (`[dev]`) and is not
-  installed in the WSL checkout, so `tests/` has not been run there. The four
-  test modules are unverified from this side. `python3 -m venv .venv &&
-  .venv/bin/pip install -e .[dev]`.
+*(B12 closed — see §0.)*
 
 ---
 
