@@ -86,3 +86,11 @@ class SqliteSkillStore:
     def retire(self, skill_id: str) -> None:
         self._conn.execute("UPDATE skills SET retired = 1 WHERE skill_id = ?", (skill_id,))
         self._conn.commit()
+
+    def max_version(self, context_id: str) -> int:
+        # Across all rows, retired ones included, so a replacement skill never
+        # reuses a demoted skill's version/id.
+        r = self._conn.execute(
+            "SELECT MAX(version) AS v FROM skills WHERE context_id = ?", (context_id,)
+        ).fetchone()
+        return r["v"] if r and r["v"] is not None else 0
