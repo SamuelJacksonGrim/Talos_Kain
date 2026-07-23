@@ -14,20 +14,6 @@ The end goal, stated plainly (Samuel, 2026-07-23):
 This is the compass. Every mechanism in `aamsfc.md` is measured against it, and
 so is every tier in the roadmap.
 
-## Why the second paragraph is second
-
-An earlier draft of this file made governance the goal — run a long time, change
-only through watched doors, come out the same mind. That is the *law*, and it is
-shared by every repo in the family. It is not this repo's purpose.
-
-A north star made entirely of guardrail describes a system that would be
-perfectly content doing nothing, safely, forever. Every gate in the cornerstone
-says *no*; the compass has to say what the *yes* is for.
-
-This is the same gap that produced v7 — identity, capability, memory and
-control, with nothing holding what to pursue — reappearing one level up, in the
-document that is supposed to point.
-
 ## What "learn by losing" actually commits to
 
 - **Losing is the signal, not the error state.** Failure is the training data.
@@ -66,21 +52,12 @@ against the design.
 in this repo is a position on that line, and the invariants exist so a position
 can't be moved by accident.
 
-## Why this is reachable: what already exists
+## Why this is reachable
 
-| Capability | What it needs | Where it lives today |
-|---|---|---|
-| **Live** | sensorium, motor loop, reflex-speed action over disk-speed memory | §0, §3, §4 spec · `services/sensorium.py`, `motor.py`, `reflex.py` — **spine runs on mock**, organs stubbed |
-| **Learn** | episodic capture, consolidation, skill neurogenesis | §3, §7, §8 spec · `skill_extraction.py`, `skill_lifecycle.py` — **grows named skills on mock** |
-| **Rest** | autonomic sleep pressure, blind leases, zero-latency wake | §1, §8, §9 spec · `services/sleep.py`, `scheduler.py` — stubbed |
-| **Stay itself** | identity kernel behind a forensic crucible | §10, §11 spec · `identity_crucible.py`, `storage/sqlite/identity.py` — stubbed |
-| **Know what it's for** | tiered telos, wake-path fit check, horizon gate | §15 spec · `services/purpose.py`, `domain/telos.py` — stubbed |
-| **Account for itself** | immutable, verifiable ledger | `storage/sqlite/audit.py` — **chain verifies on mock** |
-| **Be checkable** | invariants phrased as violations | `tools/invariant_lint.py` — **running against the diagram** |
-
-Two rows are no longer hypotheses. The vertical slice learns and names what it
-learned; the audit chain verifies. Everything else is a typed stub with the
-shape already carved.
+The forcing-function loop already runs end to end — `observe → score → choose →
+act → reward → record → learn` — and it learns. What is live, what is dormant,
+and which module holds each: **[`architecture.md`](architecture.md)**. That file
+is the source of truth for build state; this one does not duplicate it.
 
 ## The three real gaps
 
