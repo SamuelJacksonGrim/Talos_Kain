@@ -23,6 +23,22 @@ Scope in one sentence. Then the diff size: `N files, +X / -Y`.
 - **folded** — merged into an existing item rather than standing alone
 - **shelved** — decided against, with the argument, so it is not re-litigated
 
+## Rejected alternatives <!-- when a real fork was taken -->
+
+The design *not* taken and the argument against it — precedence it would invert,
+gate it would bypass, hop it would add. Stops the debate reopening in a month.
+
+## Test (red → green) <!-- fixes -->
+
+The test must fail on pre-fix code. Name the exact failure it produces there,
+then the count after.
+
+## Found along the way <!-- the bigger fish -->
+
+Discoveries incidental to this PR that matter more than this PR: coverage that
+never ran, an organ dormant at harness scale, a check measuring the wrong thing.
+File it in the backlog and say so here.
+
 ## Honest corrections
 
 - Any earlier claim, summary, or doc line this proves wrong — named as wrong.
