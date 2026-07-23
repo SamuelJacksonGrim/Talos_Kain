@@ -1,22 +1,46 @@
-# North Star — an organism that stays itself while it changes
+# North Star — learn by losing, and be able to show it
 
-The end goal, stated plainly:
+The end goal, stated plainly (Samuel, 2026-07-23):
 
-> A mind can run inside this harness **continuously** — acting, learning,
-> resting, and waking — for a long time, and still be **recognizably the same
-> mind** at the end of it. Everything it becomes, it became through a door that
-> was watched. Nothing it became happened by accident, by drift, or by anyone
-> who wasn't supposed to have a say.
+> The organism gets **better at something by failing at it** — repeatedly,
+> unattended, over a long time — and can **point at what it learned**. A noisy
+> losing streak becomes a durable win, and there is a named skill to show for it.
+> It survives that failure without drifting into something else: everything it
+> became, it became through a door that was watched.
+>
+> Governance is what makes running it unattended safe. It is not what the running
+> is for.
 
-This is the compass. Every mechanism in `aamsfc.md` is a step toward it, and
-every finding, gate, and invariant is measured against it.
+This is the compass. Every mechanism in `aamsfc.md` is measured against it, and
+so is every tier in the roadmap.
 
-> **Draft notice.** The statement above is a Claude draft assembled from the
-> README and the cornerstone. It is written here so collaborators aim at the
-> same target, not because it is final. The architect (Samuel Grim) revises it
-> into his own words, exactly as with `README.md`.
+## Why the second paragraph is second
 
-## The governing law
+An earlier draft of this file made governance the goal — run a long time, change
+only through watched doors, come out the same mind. That is the *law*, and it is
+shared by every repo in the family. It is not this repo's purpose.
+
+A north star made entirely of guardrail describes a system that would be
+perfectly content doing nothing, safely, forever. Every gate in the cornerstone
+says *no*; the compass has to say what the *yes* is for.
+
+This is the same gap that produced v7 — identity, capability, memory and
+control, with nothing holding what to pursue — reappearing one level up, in the
+document that is supposed to point.
+
+## What "learn by losing" actually commits to
+
+- **Losing is the signal, not the error state.** Failure is the training data.
+  That makes the reward path and skill neurogenesis the spine, and everything
+  else support.
+- **It has to survive losing.** Repeated failure without collapse, without
+  drift, without becoming something else in order to cope. This is where the
+  governing law re-enters — as what makes unattended failure safe to run.
+- **It has to be able to show you.** A named, versioned skill you can point at
+  and diff out of the library. Learning that can't be exhibited is
+  indistinguishable from noise.
+
+## The governing law (the constraint, not the goal)
 
 One sentence, and it runs through every repo in the family:
 
@@ -27,6 +51,10 @@ Everything else in the architecture is that sentence applied to a specific
 domain — identity through `ANNEAL`, capability through `PUBLISH`, control-plane
 change through `META`, campaign purpose through `HORIZON`, standing purpose
 through the architect's signature.
+
+It is what lets the organism fail ten thousand times unattended and still be
+itself on the other side. That is a precondition for the north star, and a
+precondition is not a destination.
 
 ## The tightrope the name states
 
