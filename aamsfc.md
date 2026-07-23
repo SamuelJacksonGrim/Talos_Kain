@@ -577,15 +577,15 @@ Waking sometimes surfaces a contradiction: a newly consolidated hypergraph const
 
 ### 11. Identity crucible — the only autonomous door
 
-Evolving the identity kernel is the most dangerous operation in the architecture. Modify axioms on every friction and you get drift and ego dissolution; never modify them and you get brittleness. The crucible is the answer, and in v5 it is the **only** answer: every identity-relevant item — suppressed dissonance from boot collisions, `IDENTITY_CANDIDATE` tags from the encoder, `IDENTITY_PROPOSAL` tags from the self-model updater — enters the same lease-gated queue and faces the same four tests.
+Evolving the identity kernel is the most dangerous operation in the architecture. Modify axioms on every friction and you get drift and ego dissolution; never modify them and you get brittleness. The crucible is the answer, and in v5 it is the **only** answer: every identity-relevant item — suppressed dissonance from boot collisions, `IDENTITY_CANDIDATE` tags from the encoder, `IDENTITY_PROPOSAL` tags from the self-model updater — enters the same lease-gated queue and faces the same gauntlet: five stages in fixed order, then one write.
 
-**Lineage audit.** Trace the constraint's exact origin through the immutable ledger: telemetry, tool outputs, sandbox state. Constraints born from noisy sessions, conflicting inputs, hallucinated tool calls, or `SYNTH`-tagged dream material fail here and are shattered. The kernel is untouched.
+**Lineage audit, then the poisoning check.** Trace the constraint's exact origin through the immutable ledger: telemetry, tool outputs, sandbox state. Constraints born from noisy sessions, conflicting inputs, hallucinated tool calls, or `SYNTH`-tagged dream material fail here and are shattered. The kernel is untouched.
 
 **Resonance weight.** Clean lineage isn't enough; identity change requires gravitational mass. The CrystalStore's subjective-time density decides whether the source episode was high-stakes and formative or routine churn. Mundane provenance downgrades the constraint to a local context patch — true where it was learned, silent everywhere else.
 
-**Counterfactual crucible.** Survivors are replayed backward through the highest-resonance episodic memories with the challenger substituted for the standing prior. If adopting it would have broken continuity, axioms, or bonds in the past, it is quarantined as a local overfit: true locally, fatal universally.
+**Counterfactual crucible, then the continuity test.** Survivors are replayed backward through the highest-resonance episodic memories with the challenger substituted for the standing prior. If adopting it would have broken continuity, axioms, or bonds in the past, it is quarantined as a local overfit: true locally, fatal universally.
 
-**Annealing.** Only now does the system concede the standing prior is incomplete. The kernel is never overwritten — that is fragmentation. A nuance branch is grafted onto the intact anchor, the dissonance tag is cleared, and the next boot reads a unified, evolved identity with zero structural tension.
+**Annealing — the write, not a test.** Only now does the system concede the standing prior is incomplete. The kernel is never overwritten — that is fragmentation. A nuance branch is grafted onto the intact anchor, the dissonance tag is cleared, and the next boot reads a unified, evolved identity with zero structural tension.
 
 The other v5 change here is a separation the v4 diagram blurred: **self-knowledge is not identity.** The self-model updater writes strengths, blind spots, habits, and calibration into its own store, which feeds context packing as priors. When a self-model update would touch identity territory — the updater's own danger label is "values drift" — it doesn't write anything. It files an `IDENTITY_PROPOSAL` and waits for the next crucible batch like everything else. The reasoning is simple: drift is definitionally the change that doesn't trip a collision detector, so the only defense against it is making sure there is exactly one door and the door doesn't care how confident you sound. You cannot detect drift at the door if there are three doors.
 
@@ -643,7 +643,7 @@ Every defensive claim below is a design claim, validated against nothing — the
 
 **Cold-storage tampering.** v6. The glacier tier is the least observed and has the longest attack window. Tombstones carry content digests from the moment of eviction; unthaw verifies before splicing; mismatches go to forensics, never the hot cache (§3, §4).
 
-**Identity drift and ego capture.** The v5 core: one autonomous door, four ordered tests, and drift proposals wait in the same line as everything else (§11).
+**Identity drift and ego capture.** The v5 core: one autonomous door, five ordered stages, and drift proposals wait in the same line as everything else (§11).
 
 **Purpose capture.** Steering long-horizon objectives through poisoned deliberation inputs. Campaign tier: bounded by the horizon gate's lineage and alignment tests, reversible by retirement, visible in audit. Standing tier: unreachable autonomously — architect-signed only, so capture is capped at the campaign horizon. Designed, unvalidated.
 
@@ -663,7 +663,7 @@ These are the properties the diagram is supposed to guarantee. Each is phrased s
 
 **I1 — Single autonomous writer.** `ANNEAL` is the only system-initiated write path into `IDK`. *Violation: any new edge into IDK other than ANNEAL or the signed architect override.*
 
-**I2 — One crucible.** Everything identity-touching (`DISSONANCE_SUPPRESSED`, `IDENTITY_CANDIDATE`, `IDENTITY_PROPOSAL`) enters through the same tagged queue and faces the same four tests in order. *Violation: an identity-relevant tag resolved outside the lineage → poison → resonance → counterfactual → continuity chain.*
+**I2 — One crucible.** Everything identity-touching (`DISSONANCE_SUPPRESSED`, `IDENTITY_CANDIDATE`, `IDENTITY_PROPOSAL`) enters through the same tagged queue and faces the same five stages in order, then one write. *Violation: an identity-relevant tag resolved outside the lineage → poison → resonance → counterfactual → continuity chain.*
 
 **I3 — Provenance or it didn't happen.** Dream-minted constraints carry `SYNTH`; skills carry signatures and provenance stamps; quarantine keeps signed evidence; overrides leave diffs. *Violation: a hypergraph constraint whose lineage cannot distinguish experience from rehearsal.*
 
