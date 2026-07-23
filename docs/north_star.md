@@ -61,11 +61,14 @@ is the source of truth for build state; this one does not duplicate it.
 
 ## The three real gaps
 
-1. **The spine runs; the organs don't.** Roughly twenty modules still raise
-   `NotImplementedError`. The learning loop is real on a deterministic mock
-   environment — 400 episodes, 80% → 100%, four named skills, verified ledger —
-   and that is a genuinely different thing from a specification. It is also not
-   yet sleep, not yet the crucible, not yet telos, and not yet StarCraft.
+1. **The spine runs, two organs are awake, nineteen aren't.** The learning loop
+   is real on a mock environment — 400 episodes, 80% → 100%, four named skills,
+   verified ledger, 21 tests — and the self-model (§11 tail) and reward engine
+   (§5) are live, so it can recover from a drifting world rather than locking
+   into confident failure. That is a genuinely different thing from a
+   specification. It is also not yet sleep, not yet the crucible, not yet telos,
+   and not yet StarCraft. Organs wake on forcing function, not on speculation —
+   see [`BACKLOG.md`](BACKLOG.md).
 
 2. **The invariants are checked against the map, not the territory.**
    `invariant_lint.py` asserts I1, I2, I4, I8, I10, I11 and I12 against

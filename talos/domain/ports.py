@@ -77,6 +77,8 @@ class SkillStore(Protocol):
 
     def retire(self, skill_id: str) -> None: ...
 
+    def max_version(self, context_id: str) -> int: ...
+
 
 @runtime_checkable
 class SelfModelStore(Protocol):

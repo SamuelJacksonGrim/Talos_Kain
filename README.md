@@ -2,7 +2,7 @@
 
 **The organism.** An autonomous-agent harness that gets better at something by failing at it — repeatedly, unattended, over a long time — and can point at the named skill it grew. The body and nervous system that wraps a cognitive *mind* and lets it live, act, learn, rest, and remain itself across time.
 
-> **Status:** the spine runs; the organs don't. A milestone-zero vertical slice learns on a deterministic mock environment — 400 episodes, 80% → 100%, four named skills, verified audit chain — with 16 tests green. Roughly twenty modules still raise `NotImplementedError`, and StarCraft II is not wired. The cornerstone (`aamsfc.md`) describes far more than is built; treat every mechanism it names as a hypothesis unless `talos/` implements it.
+> **Status:** the spine runs and two organs are awake. A milestone-zero vertical slice learns on a mock environment — 400 episodes, 80% → 100%, four named skills, verified audit chain — with 21 tests green. Woken: the **self-model** (§11 tail) and the **reward engine** (§5), which lets the organism recover from a drifting world instead of locking into confident failure. Nineteen modules still raise `NotImplementedError`, and StarCraft II is not wired. The cornerstone (`aamsfc.md`) describes far more than is built; treat every mechanism it names as a hypothesis unless `talos/` implements it.
 
 ## Run it
 
