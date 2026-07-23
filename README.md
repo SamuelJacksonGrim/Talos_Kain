@@ -19,6 +19,15 @@ The governing law is the same one that runs through every repo in the family: **
 
 - **`aamsfc.md`** — *Autonomous Agent Memory & Skill Flow Chart (v7)*: the full architecture, diagram + walkthrough. Provenance and authority as stated in that document (review and final authority: Samuel Grim).
 
+## Working documents
+
+- **`docs/north_star.md`** — the compass. What "done" means, and the three real gaps.
+- **`ROADMAP.md`** — sequencing. Current position: T1, making the spec falsifiable.
+- **`docs/BACKLOG.md`** — the open-work ledger, including what the linter found.
+- **`tools/invariant_lint.py`** — asserts the cornerstone's invariants against its own
+  diagram. Run it: `python3 tools/invariant_lint.py aamsfc.md --audit --growth`.
+  This is the v5/v6 hand audit, automated. It currently reports one violation.
+
 ## First milestone
 
 A **StarCraft II agent that measurably learns across games** — the minimal slice of the spec (sensorium + motor loop + reward + episodic memory + skill neurogenesis) that turns a noisy losing streak into a win, and can point at the *named skill it grew* to get there. Curriculum: beat the built-in AI on Easy, then re-baseline at Medium and watch the second curve. The game is the forcing function that drags the spec into code.
