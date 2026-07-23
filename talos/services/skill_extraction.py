@@ -11,6 +11,15 @@ law:
 
 The distilled candidate carries the episode lineage that produced it, so a
 published skill answers "which games grew you?" as a query, not a story.
+
+Two changes came with the reward engine (§5), so skills survive a drifting
+world:
+
+* nomination looks only at a recent **window** of episodes, so a winner that
+  stopped winning ages out instead of dominating on lifetime count; and
+* nomination consults the reward engine's **value**, so a stale action whose
+  recency-weighted value has collapsed is never re-published even if its old
+  wins are still in the window.
 """
 
 from __future__ import annotations
@@ -20,19 +29,26 @@ import time
 from talos.domain.gate import Gate
 from talos.domain.ports import AuditStore, EpisodeStore, SkillStore
 from talos.domain.types import GateDecision, Skill, SkillCandidate
+from talos.services.reward_engine import RewardEngine
 
 
 class SkillExtractor:
-    """Nominates a per-context skill candidate from episodic evidence."""
+    """Nominates a per-context skill candidate from recent, still-valued
+    episodic evidence."""
 
-    def __init__(self, episodes: EpisodeStore, min_support: int = 3):
+    def __init__(self, episodes: EpisodeStore, reward: RewardEngine, window: int = 25):
         self._episodes = episodes
-        self._min_support = min_support
+        self._reward = reward
+        self._window = window
 
     def nominate(self, context_id: str) -> SkillCandidate | None:
+        episodes = self._episodes.by_context(context_id)
+        if self._window:
+            episodes = episodes[-self._window :]
+
         wins: dict[int, list[str]] = {}
         plays: dict[int, int] = {}
-        for ep in self._episodes.by_context(context_id):
+        for ep in episodes:
             if not ep.steps:
                 continue
             action_id = ep.steps[0].action.action_id
@@ -40,12 +56,17 @@ class SkillExtractor:
             if ep.outcome == "win":
                 wins.setdefault(action_id, []).append(ep.episode_id)
 
-        if not wins:
+        # Only actions the reward engine still trusts are consolidation-worthy.
+        # This is what stops a drifted-away winner from being re-crowned on the
+        # strength of stale wins still sitting in the window.
+        trusted = {
+            a: ids for a, ids in wins.items() if self._reward.is_trusted(context_id, a)
+        }
+        if not trusted:
             return None
 
-        # Winning action with the most supporting episodes.
-        action_id = max(wins, key=lambda a: len(wins[a]))
-        support = tuple(wins[action_id])
+        action_id = max(trusted, key=lambda a: len(trusted[a]))
+        support = tuple(trusted[action_id])
         confidence = len(support) / plays[action_id]
         return SkillCandidate(
             context_id=context_id,
@@ -64,6 +85,10 @@ class SkillPublisher:
     re-decide an already-settled (context, action, verdict) is a no-op — it is
     neither re-published nor re-audited. This keeps the audit ledger a log of
     governance *events*, not of heartbeats.
+
+    ``forget`` clears that memo for a context. Recovery calls it after demoting
+    a drifted skill, so the replacement can be published even though the last
+    settled decision was an ADMIT.
     """
 
     def __init__(self, skills: SkillStore, gate: Gate, audit: AuditStore):
@@ -72,6 +97,9 @@ class SkillPublisher:
         self._audit = audit
         # Last settled outcome per context: (action_id, decision).
         self._last: dict[str, tuple[int, GateDecision]] = {}
+
+    def forget(self, context_id: str) -> None:
+        self._last.pop(context_id, None)
 
     def submit(self, candidate: SkillCandidate) -> GateDecision:
         decision = self._gate.admit(candidate)
@@ -84,7 +112,9 @@ class SkillPublisher:
         published_id = None
         if decision is GateDecision.ADMIT:
             existing = self._skills.for_context(candidate.context_id)
-            version = (existing.version + 1) if existing else 1
+            # Version climbs past every prior skill for this context, retired
+            # ones included, so a replacement never collides with a demoted id.
+            version = self._skills.max_version(candidate.context_id) + 1
             if existing is not None and existing.action_id != candidate.action_id:
                 # A different winning action supersedes the old skill.
                 self._skills.retire(existing.skill_id)
