@@ -21,9 +21,9 @@ below. One line is fine. Keep it honest about what's a hypothesis.
 1. **Stochastic / noisy world.** Outcomes stop being deterministic — the best
    action wins with probability `p < 1`. This is the single highest-value next
    step, because it forces two things at once:
-   - **Recovery trigger A → C** (see Queued Decisions). The current
-     commit-failure trigger *thrashes* under noise and must become
-     value-collapse based.
+   - **Recovery trigger: surprise-threshold → value-collapse** (see Queued
+     Decisions). The current surprise-threshold trigger (`prediction_error ≤
+     −0.5`) over-triggers under noise and must become value-collapse based.
    - **Streaming TD-style value learning (§5 deeper).** A running win-rate
      estimate per (context, action) with real confidence, not a binary winner.
 
@@ -33,9 +33,10 @@ below. One line is fine. Keep it honest about what's a hypothesis.
    (there's nothing to yield *to* in a one-step world).
 
 3. **Insurance comment at the recovery site.** Tiny: note in
-   `organism._recover` / `reward_engine` that trigger A assumes deterministic
-   outcomes and must move to C under noise, so nobody adds a noisy env later and
-   gets silent thrashing. (Do this whenever the reward-engine change merges.)
+   `organism._recover` / `reward_engine` that the surprise-threshold trigger
+   assumes deterministic outcomes and must move to value-collapse under noise,
+   so nobody adds a noisy env later and gets silent thrashing. (Do this whenever
+   the reward-engine change merges.)
 
 ## Organs still dormant (forcing function → what waking needs)
 
@@ -65,14 +66,17 @@ below. One line is fine. Keep it honest about what's a hypothesis.
 
 ## Queued decisions
 
-- **Recovery trigger: A (commit-failure, current) → C (value-collapse).**
-  Decided: keep A while the world is deterministic; switch to C the moment
-  outcomes become stochastic. C recovers when a committed action's
-  recency-weighted value drops below the trust line, which distinguishes an
-  *unlucky* loss from a *stale* belief — the distinction noise forces. Full
-  pros/cons captured in session; the short version: A is fast and simple but
-  thrashes under noise; C is noise-tolerant and makes prediction error
-  load-bearing for the trigger, not just for nomination.
+- **Recovery trigger: surprise-threshold (current) → value-collapse.** See
+  `architecture/DecisionLog.md` D-004. The shipped trigger is the reward
+  surprise `prediction_error ≤ −0.5` (an action valued ≥ 0.5 lost) — *not* a
+  source-based commit-failure check, which an earlier session summary mislabeled
+  it as. Decided: keep it while the world is deterministic; switch to
+  value-collapse the moment outcomes become stochastic. Value-collapse recovers
+  only when an action's recency-weighted value drops below the trust line after
+  *sustained* failure, which distinguishes an *unlucky* loss from a *stale*
+  belief — the distinction noise forces. The short version: the surprise
+  threshold is simple and correct under determinism but over-triggers under
+  noise; value-collapse is noise-tolerant.
 
 ## Infrastructure / tech-debt
 
