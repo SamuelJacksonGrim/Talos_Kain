@@ -114,8 +114,35 @@ a gap the document itself names as open.
   slice — sensorium + motor loop + reward + episodic memory + skill
   neurogenesis." That is five subsystems, most of the architecture. The *test*
   named alongside it is much tighter: measurably learns, and can point at the
-  named skill it grew. Separate the test from the subsystem list; the test is
-  achievable and the list is a year. See `ROADMAP.md` T3.
+  named skill it grew — and **that test already passes on the mock environment**
+  (400 episodes, 80% → 100%, four named skills, verified ledger). Separate the
+  test from the subsystem list, and say plainly that what remains is moving it
+  somewhere the world pushes back. See `ROADMAP.md` T6.
+
+---
+
+## 2a · Code-side (opened 2026-07-23, after the stale-clone correction)
+
+- **B10 · Lint the territory, not just the map.** `invariant_lint.py` asserts
+  the invariants against `aamsfc.md`'s diagram. **Nothing asserts them against
+  `talos/`.** A diagram that passes while the implementation quietly doesn't is
+  the exact failure the linter exists to prevent, one level down. Wanted: a
+  static check over the package for who writes each store (does
+  `storage/sqlite/identity.py` have exactly one writer in practice?), plus
+  runtime assertions for I3, I5, I6, I7 and I9 — which were never
+  diagram-checkable and only become testable against running code.
+  `tests/test_gate.py` and `tests/test_audit_chain.py` are the seed.
+  See `ROADMAP.md` T3.
+
+- **B11 · Growth in the stores.** B7 is a finding about the *diagram*. Whether
+  `storage/sqlite/episodic.py`, `hypergraph.py`, `skills.py` and `audit.py`
+  inherit the same missing-drain gap, or quietly solved it, is unchecked. Check
+  before designing the fix — the code may already be ahead of the spec here.
+
+- **B12 · Dev environment.** `pytest` is an optional extra (`[dev]`) and is not
+  installed in the WSL checkout, so `tests/` has not been run there. The four
+  test modules are unverified from this side. `python3 -m venv .venv &&
+  .venv/bin/pip install -e .[dev]`.
 
 ---
 

@@ -42,41 +42,51 @@ can't be moved by accident.
 
 | Capability | What it needs | Where it lives today |
 |---|---|---|
-| **Live** | sensorium, motor loop, reflex-speed action over disk-speed memory | §0, §3, §4 — designed |
-| **Learn** | episodic capture, consolidation, skill neurogenesis | §3, §7, §8 — designed |
-| **Rest** | autonomic sleep pressure, blind leases, zero-latency wake | §1, §8, §9 — designed |
-| **Stay itself** | identity kernel behind a forensic crucible | §10, §11 — designed |
-| **Know what it's for** | tiered telos, wake-path fit check, horizon gate | §15 — designed |
-| **Be checkable** | invariants phrased as violations | `tools/invariant_lint.py` — **running** |
+| **Live** | sensorium, motor loop, reflex-speed action over disk-speed memory | §0, §3, §4 spec · `services/sensorium.py`, `motor.py`, `reflex.py` — **spine runs on mock**, organs stubbed |
+| **Learn** | episodic capture, consolidation, skill neurogenesis | §3, §7, §8 spec · `skill_extraction.py`, `skill_lifecycle.py` — **grows named skills on mock** |
+| **Rest** | autonomic sleep pressure, blind leases, zero-latency wake | §1, §8, §9 spec · `services/sleep.py`, `scheduler.py` — stubbed |
+| **Stay itself** | identity kernel behind a forensic crucible | §10, §11 spec · `identity_crucible.py`, `storage/sqlite/identity.py` — stubbed |
+| **Know what it's for** | tiered telos, wake-path fit check, horizon gate | §15 spec · `services/purpose.py`, `domain/telos.py` — stubbed |
+| **Account for itself** | immutable, verifiable ledger | `storage/sqlite/audit.py` — **chain verifies on mock** |
+| **Be checkable** | invariants phrased as violations | `tools/invariant_lint.py` — **running against the diagram** |
 
-The last row is the only one that is not a hypothesis, and it is the newest. It
-matters out of proportion to its size: it is the first thing in this repo that
-can be *wrong in public*.
+Two rows are no longer hypotheses. The vertical slice learns and names what it
+learned; the audit chain verifies. Everything else is a typed stub with the
+shape already carved.
 
 ## The three real gaps
 
-1. **None of it is code.** 723 lines of specification, zero lines of
-   implementation. Every mechanism above is a hypothesis until it survives
-   contact with a running system. The document says this on every page and the
-   discipline is worth keeping.
+1. **The spine runs; the organs don't.** Roughly twenty modules still raise
+   `NotImplementedError`. The learning loop is real on a deterministic mock
+   environment — 400 episodes, 80% → 100%, four named skills, verified ledger —
+   and that is a genuinely different thing from a specification. It is also not
+   yet sleep, not yet the crucible, not yet telos, and not yet StarCraft.
 
-2. **Half the invariants aren't structurally checkable.** I1, I2, I4, I8, I10,
-   I11, I12 can be asserted against the diagram today. I3, I5, I6, I7, I9
-   constrain payloads, timing, and staging — they need a runtime, and until
-   there is one they are prose.
+2. **The invariants are checked against the map, not the territory.**
+   `invariant_lint.py` asserts I1, I2, I4, I8, I10, I11 and I12 against
+   `aamsfc.md`'s diagram. Nothing yet asserts them against `talos/`. A diagram
+   that passes and an implementation that quietly doesn't is exactly the failure
+   the linter exists to prevent, one level down. I3, I5, I6, I7 and I9 constrain
+   payloads, timing and staging — they were never diagram-checkable and become
+   testable only against running code.
 
 3. **Growth has one worked story.** `SEM → EVICT` is the only store in the
-   architecture with a bounded-growth path. `EPI`, `HG`, `PROC`, and `AUDIT`
+   *diagram* with a bounded-growth path. `EPI`, `HG`, `PROC` and `AUDIT`
    accumulate without drain. The identity crucible replays through `EPI`, so the
    cost of the strictest gate rises for the life of the system — and a gate that
-   gets too expensive is a gate that gets skipped.
+   gets too expensive is a gate that gets skipped. Whether the SQLite stores
+   inherit that gap is unchecked.
 
 ## What "done" would look like for the first era
 
 Not the full organism. The smallest thing that proves the spec touches reality:
-a StarCraft II agent that **measurably learns across games**, and can point at
-the **named skill it grew** to get there. See `ROADMAP.md` for why that test is
-smaller than the subsystem list it is usually quoted with.
+
+> An agent that **measurably learns across games**, and can point at the **named
+> skill it grew** to get there.
+
+**That test already passes on the mock environment.** What remains is making it
+pass somewhere the world pushes back — StarCraft II on Easy, then a re-baseline
+at Medium to see whether a second curve appears. See `ROADMAP.md`.
 
 ---
 
