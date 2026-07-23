@@ -1,8 +1,17 @@
 # Talos_Kain
 
-**The organism.** A governed, continuously-learning autonomous-agent harness — the body and nervous system that wraps a cognitive *mind* and lets it live, act, learn, rest, and remain itself across time.
+**The organism.** An autonomous-agent harness that gets better at something by failing at it — repeatedly, unattended, over a long time — and can point at the named skill it grew. The body and nervous system that wraps a cognitive *mind* and lets it live, act, learn, rest, and remain itself across time.
 
-> **Status:** design specification. Nothing here is implemented or test-validated yet. Every mechanism is a hypothesis until it survives contact with code. (See `aamsfc.md`.)
+> **Status:** the spine runs; the organs don't. A milestone-zero vertical slice learns on a deterministic mock environment — 400 episodes, 80% → 100%, four named skills, verified audit chain — with 16 tests green. Roughly twenty modules still raise `NotImplementedError`, and StarCraft II is not wired. The cornerstone (`aamsfc.md`) describes far more than is built; treat every mechanism it names as a hypothesis unless `talos/` implements it.
+
+## Run it
+
+```bash
+PYTHONPATH=. python3 scripts/run_mock.py          # the learning slice, stdlib only
+python3 -m venv .venv && .venv/bin/pip install -e .[dev]
+.venv/bin/python -m pytest -q                     # 16 tests
+python3 tools/invariant_lint.py aamsfc.md --audit --growth
+```
 
 ## Where this sits (the family)
 
@@ -21,16 +30,22 @@ The governing law is the same one that runs through every repo in the family: **
 
 ## Working documents
 
-- **`docs/north_star.md`** — the compass. What "done" means, and the three real gaps.
-- **`ROADMAP.md`** — sequencing. Current position: T1, making the spec falsifiable.
+- **`docs/north_star.md`** — the compass: *learn by losing, and be able to show it.*
+- **`ROADMAP.md`** — sequencing. Current position: **T2**, making the cornerstone falsifiable.
 - **`docs/BACKLOG.md`** — the open-work ledger, including what the linter found.
 - **`tools/invariant_lint.py`** — asserts the cornerstone's invariants against its own
-  diagram. Run it: `python3 tools/invariant_lint.py aamsfc.md --audit --growth`.
-  This is the v5/v6 hand audit, automated. It currently reports one violation.
+  diagram. The v5/v6 hand audit, automated. It currently reports one violation, which
+  is real work rather than a broken test.
 
-## First milestone
+## The milestone
 
-A **StarCraft II agent that measurably learns across games** — the minimal slice of the spec (sensorium + motor loop + reward + episodic memory + skill neurogenesis) that turns a noisy losing streak into a win, and can point at the *named skill it grew* to get there. Curriculum: beat the built-in AI on Easy, then re-baseline at Medium and watch the second curve. The game is the forcing function that drags the spec into code.
+The **test** is small and already passes on the mock:
+
+> measurably learns across games, and can point at the **named skill it grew** to get there.
+
+The **milestone** is making that same test pass somewhere the world pushes back — **StarCraft II**, built-in AI on Easy, then a re-baseline at Medium to see whether a second curve appears. The game is the forcing function that drags the spec into code.
+
+Worth keeping the two apart: the test needs episodic capture, a reward signal, and one skill that is born, promoted and cited. It does not need all of sensorium, motor loop, sleep, crucible and telos — those are the organism, not the milestone.
 
 ## On the name
 

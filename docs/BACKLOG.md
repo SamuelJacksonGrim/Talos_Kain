@@ -16,6 +16,23 @@ a gap the document itself names as open.
   `POISON` into lineage and `CONTINUITY` into the counterfactual.
   *Closed 2026-07-23.*
 
+- **B13 · Stale status claims.** `README.md` led with *"design specification.
+  Nothing here is implemented or test-validated yet"* and `aamsfc.md` said
+  *"nothing in this document is implemented."* Both were written before PRs #1–#3
+  and were flatly false by the time anyone read them — the most visible line in
+  the repo was the wrongest. Both now state what actually runs and what doesn't,
+  and point at `talos/` as the arbiter. `README.md` also gained a **Run it**
+  block, since "how do I see it work" had no answer anywhere.
+  *Closed 2026-07-23.*
+
+- **B9 · README milestone framing.** Was billed as "the minimal slice —
+  sensorium + motor loop + reward + episodic memory + skill neurogenesis," which
+  is five subsystems and most of the architecture. Split into *the test* (small,
+  already passing on the mock) and *the milestone* (that same test somewhere the
+  world pushes back — SC2 on Easy, re-baseline at Medium), with a line keeping
+  them apart so the subsystem list stops masquerading as a prerequisite.
+  *Closed 2026-07-23.*
+
 - **B12 · Dev environment, and the suite actually passes.** `pytest` is an
   optional `[dev]` extra and wasn't installed in the WSL checkout, so `tests/`
   had never been run from that side. Set up and run: **16 passed in 18.64s** —
@@ -117,15 +134,6 @@ a gap the document itself names as open.
   gate's. Same lesson as B1a: what isn't expressed structurally can't be checked
   structurally. Decide whether to expand `HORIZON` or accept the asymmetry in
   writing.
-
-- **B9 · README milestone framing.** The SC2 milestone is billed as "the minimal
-  slice — sensorium + motor loop + reward + episodic memory + skill
-  neurogenesis." That is five subsystems, most of the architecture. The *test*
-  named alongside it is much tighter: measurably learns, and can point at the
-  named skill it grew — and **that test already passes on the mock environment**
-  (400 episodes, 80% → 100%, four named skills, verified ledger). Separate the
-  test from the subsystem list, and say plainly that what remains is moving it
-  somewhere the world pushes back. See `ROADMAP.md` T6.
 
 ---
 
