@@ -147,13 +147,19 @@ a gap the document itself names as open.
   `storage/sqlite/identity.py` have exactly one writer in practice?), plus
   runtime assertions for I3, I5, I6, I7 and I9 — which were never
   diagram-checkable and only become testable against running code.
-  `tests/test_gate.py` and `tests/test_audit_chain.py` are the seed.
+  `tests/test_gate.py` and `tests/test_audit_chain.py` are the seed — and so is
+  **`docs/architecture.md` §"Invariants (live from commit one)"**, which already
+  states which invariants the code claims to hold. Start by checking that
+  section's claims rather than inventing a new list.
   See `ROADMAP.md` T3.
 
-- **B11 · Growth in the stores.** B7 is a finding about the *diagram*. Whether
-  `storage/sqlite/episodic.py`, `hypergraph.py`, `skills.py` and `audit.py`
-  inherit the same missing-drain gap, or quietly solved it, is unchecked. Check
-  before designing the fix — the code may already be ahead of the spec here.
+- ~~**B11 · Growth in the stores.**~~ *Answered on the spot, 2026-07-23, so it
+  never became an item:* the code inherits the diagram's gap exactly. `DELETE
+  FROM` appears nowhere in `talos/`, and `services/consolidation.py` holds
+  `EvictionProtocol` as a dormant stub — with the three exits already named
+  correctly (shield / distill / tombstone, none of them deletion). So B7's fix
+  and the implementation land together rather than one correcting the other.
+  Folded into **B7**.
 
 *(B12 closed — see §0.)*
 
