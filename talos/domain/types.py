@@ -167,3 +167,38 @@ class AuditRecord:
     prev_digest: str
     digest: str
     ts: float
+
+
+# --------------------------------------------------------------------------
+# Lifecycle / continuity (§1/§9: sleep-wake, resume)
+# --------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class RunState:
+    """A durable cursor for one run — the seam that lets a run survive being
+    interrupted (crash, power-off, hibernate) and continue instead of
+    restarting.
+
+    ``last_index`` is the highest episode index whose *entire* side-effect set
+    (episodic save, reflection, reward fold, skill admission) has committed.
+    Resume begins at ``last_index + 1``. It is written last, after every other
+    store for that episode, so it is the single authority on "how far did we
+    genuinely get". ``run_seed`` + ``env_name`` are provenance: a cursor is
+    meaningless without the deterministic stream it indexes into.
+    """
+
+    run_id: str
+    run_seed: int
+    env_name: str
+    last_index: int
+    target_episodes: int
+    status: str  # "running" | "done"
+    updated_at: float
+
+    @property
+    def resume_from(self) -> int:
+        return self.last_index + 1
+
+    @property
+    def complete(self) -> bool:
+        return self.status == "done" or self.resume_from >= self.target_episodes

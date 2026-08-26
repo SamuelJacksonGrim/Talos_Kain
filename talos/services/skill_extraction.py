@@ -101,6 +101,15 @@ class SkillPublisher:
     def forget(self, context_id: str) -> None:
         self._last.pop(context_id, None)
 
+    def restore_memo(self, memo: dict[str, tuple[int, GateDecision]]) -> None:
+        """Rehydrate the settled-decision memo on wake. The memo is volatile
+        (it is a de-dup cache, not a store of record), so a resumed process
+        starts with it empty — and would then re-publish an already-settled
+        skill as a new version and re-audit it. Rebuilding it from the audit
+        ledger (the durable record of every gate decision) before resuming
+        keeps admission idempotent across the restart."""
+        self._last = dict(memo)
+
     def submit(self, candidate: SkillCandidate) -> GateDecision:
         decision = self._gate.admit(candidate)
 

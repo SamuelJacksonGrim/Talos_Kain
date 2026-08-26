@@ -118,3 +118,14 @@ class SqliteEpisodeStore:
             "SELECT * FROM episodes ORDER BY started_at DESC LIMIT ?", (n,)
         ).fetchall()
         return [self._row_to_episode(r) for r in rows]
+
+    def for_run(self, run_id: str) -> list[Episode]:
+        """Every episode of one run, in episode order. Ordered by ``episode_id``
+        (whose ``ep{index:06d}`` suffix is zero-padded, so lexical order is
+        index order) rather than by wall-clock — resume needs the exact
+        original sequence to replay reward/self-model state, and two episodes
+        can share a ``started_at`` timestamp."""
+        rows = self._conn.execute(
+            "SELECT * FROM episodes WHERE run_id = ? ORDER BY episode_id", (run_id,)
+        ).fetchall()
+        return [self._row_to_episode(r) for r in rows]

@@ -18,6 +18,7 @@ from talos.domain.types import (
     AuditRecord,
     Episode,
     Observation,
+    RunState,
     SelfModelEntry,
     Skill,
     StepResult,
@@ -92,6 +93,18 @@ class SelfModelStore(Protocol):
     def put(self, entry: SelfModelEntry) -> None: ...
 
     def all(self) -> list[SelfModelEntry]: ...
+
+
+@runtime_checkable
+class RunStateStore(Protocol):
+    """Durable run cursor — the continuity seam (§1/§9). One row per run,
+    holding how far the run has genuinely committed. Written last in each
+    episode; read once on wake to decide where to resume. This is the small,
+    fast "delta manifest" the wake sequence ingests, not a replay of the WAL."""
+
+    def save(self, state: RunState) -> None: ...
+
+    def load(self, run_id: str) -> Optional[RunState]: ...
 
 
 @runtime_checkable
