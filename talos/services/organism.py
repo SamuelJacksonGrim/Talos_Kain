@@ -20,25 +20,27 @@ from __future__ import annotations
 
 import random
 import time
-import uuid
 from dataclasses import dataclass
 
 from talos.domain.ports import (
     AuditStore,
     Environment,
     EpisodeStore,
+    RunStateStore,
     SelfModelStore,
     SkillStore,
     WALStore,
 )
 from talos.domain.reward import is_win
-from talos.domain.types import Episode, Step
+from talos.domain.types import Episode, RunState, Step
 from talos.services.motor import Motor
 from talos.services.policy import Policy
 from talos.services.reflection import Reflector
 from talos.services.reward_engine import RewardEngine
 from talos.services.sensorium import Sensorium
 from talos.services.skill_extraction import SkillExtractor, SkillPublisher
+from talos.util.ids import episode_id as make_episode_id
+from talos.util.ids import episode_seed, new_run_id
 
 
 @dataclass
@@ -66,6 +68,8 @@ class Talos:
         reward: RewardEngine,
         run_id: str | None = None,
         run_seed: int = 0,
+        run_store: RunStateStore | None = None,
+        start_index: int = 0,
     ):
         self._env = env
         self._wal = wal
@@ -80,20 +84,54 @@ class Talos:
         self._sensorium = Sensorium()
         self._policy = Policy(skills, self_model)
         self._motor = Motor(env)
-        self.run_id = run_id or uuid.uuid4().hex[:12]
+        self.run_id = run_id or new_run_id()
         self._run_seed = run_seed
+        # Continuity: when a run_store is present the loop records a durable
+        # cursor after every episode, and ``start_index`` is where a resumed
+        # run picks up (0 for a fresh run). See services/resume.py.
+        self._run_store = run_store
+        self._start_index = start_index
 
     def run(self, n_episodes: int) -> list[EpisodeReport]:
-        self._audit.record("run.start", {"run_id": self.run_id, "seed": self._run_seed})
+        # ``run.start`` is a once-per-run governance event. A resumed run
+        # (start_index > 0) already logged it in the process that began the
+        # run, so re-logging it would fork the audit history away from an
+        # uninterrupted run's. Fresh runs log it; resumed runs do not.
+        if self._start_index == 0:
+            self._audit.record("run.start", {"run_id": self.run_id, "seed": self._run_seed})
+
         reports: list[EpisodeReport] = []
-        for i in range(n_episodes):
+        for i in range(self._start_index, n_episodes):
             reports.append(self._run_episode(i))
+            self._commit_cursor(i, n_episodes, status="running")
+
         self._audit.record("run.end", {"run_id": self.run_id, "episodes": n_episodes})
+        if n_episodes > 0:
+            self._commit_cursor(n_episodes - 1, n_episodes, status="done")
         return reports
+
+    def _commit_cursor(self, last_index: int, target: int, *, status: str) -> None:
+        """The durable commit point for an episode. Written *last*, after every
+        other store for episode ``last_index`` has committed, so the cursor is
+        the single authority on how far the run genuinely got. No-op when the
+        run has no store wired (the classic ephemeral mock run)."""
+        if self._run_store is None:
+            return
+        self._run_store.save(
+            RunState(
+                run_id=self.run_id,
+                run_seed=self._run_seed,
+                env_name=self._env.name,
+                last_index=last_index,
+                target_episodes=target,
+                status=status,
+                updated_at=time.time(),
+            )
+        )
 
     def _run_episode(self, index: int) -> EpisodeReport:
         # Deterministic per-episode seed derived from the run seed.
-        seed = self._run_seed * 1_000_003 + index
+        seed = episode_seed(self._run_seed, index)
         rng = random.Random(seed)
 
         raw_obs = self._env.reset(seed)
@@ -110,7 +148,7 @@ class Talos:
         )
 
         episode = Episode(
-            episode_id=f"{self.run_id}::ep{index:06d}",
+            episode_id=make_episode_id(self.run_id, index),
             run_id=self.run_id,
             seed=seed,
             env_name=self._env.name,
@@ -211,38 +249,101 @@ def main() -> None:
         default=0,
         help="episodes between drift events (0 = stationary world)",
     )
+    parser.add_argument(
+        "--state-dir",
+        type=str,
+        default=None,
+        help="persist the stores here so the run survives interruption and can "
+        "resume; omit for the classic ephemeral run in a temp dir",
+    )
+    parser.add_argument(
+        "--run-id",
+        type=str,
+        default=None,
+        help="stable id to resume (with --state-dir); a run resumes from its "
+        "durable cursor, or starts fresh if none exists",
+    )
     args = parser.parse_args()
 
-    tmp = Path(tempfile.mkdtemp(prefix="talos_mock_"))
+    from talos.infrastructure.storage.sqlite.run_state import SqliteRunStore
+    from talos.services.sleep import WakeSequence
+
+    persistent = args.state_dir is not None
+    if persistent:
+        root = Path(args.state_dir)
+        root.mkdir(parents=True, exist_ok=True)
+    else:
+        root = Path(tempfile.mkdtemp(prefix="talos_mock_"))
+
     env = MockEnv(
         n_contexts=args.contexts,
         n_actions=args.actions,
         env_seed=args.seed,
         drift_every=args.drift_every,
     )
-    wal = SqliteWAL(tmp / "wal.db")
-    episodes = SqliteEpisodeStore(tmp / "episodic.db")
-    skills = SqliteSkillStore(tmp / "skills.db")
-    audit = SqliteAuditStore(tmp / "audit.db")
-    self_model = SqliteSelfModelStore(tmp / "self_model.db")
+    wal = SqliteWAL(root / "wal.db")
+    episodes = SqliteEpisodeStore(root / "episodic.db")
+    skills = SqliteSkillStore(root / "skills.db")
+    audit = SqliteAuditStore(root / "audit.db")
+    self_model = SqliteSelfModelStore(root / "self_model.db")
     reward = RewardEngine()
     extractor = SkillExtractor(episodes, reward)
     publisher = SkillPublisher(skills, ConfidenceGate(), audit)
     reflector = Reflector(self_model)
 
+    run_store = None
+    run_id = None
+    start_index = 0
+    if persistent:
+        run_store = SqliteRunStore(root / "run_state.db")
+        run_id = args.run_id or new_run_id()
+        # Wake: verify the trust root, rebuild volatile state (reward + memo)
+        # from the durable log, fast-forward the world, and learn where to
+        # resume. A first start with no cursor comes back as resume_from 0.
+        manifest = WakeSequence().wake(
+            run_store=run_store,
+            run_id=run_id,
+            run_seed=args.seed,
+            env=env,
+            episodes=episodes,
+            audit=audit,
+            reward=reward,
+            publisher=publisher,
+            target_episodes=args.episodes,
+        )
+        start_index = manifest.resume_from
+        verb = "fresh run" if manifest.fresh else f"resume from episode {start_index}"
+        print(
+            f"[wake] run {run_id}: {verb}  "
+            f"(audit_ok={manifest.audit_ok}, reward_keys={manifest.reward_keys}, "
+            f"memo={manifest.memo_contexts})"
+        )
+        if start_index >= args.episodes:
+            print(f"[wake] run already complete at {start_index}/{args.episodes} episodes.")
+            return
+
     talos = Talos(
         env, wal, episodes, skills, self_model, audit,
         extractor, publisher, reflector, reward,
+        run_id=run_id,
         run_seed=args.seed,
+        run_store=run_store,
+        start_index=start_index,
     )
-    reports = talos.run(args.episodes)
+    talos.run(args.episodes)
 
+    # Report the full curve from the durable episodic archive, so the numbers
+    # are honest across a resume (reports would only hold this leg's episodes).
+    all_eps = episodes.for_run(talos.run_id) if persistent else episodes.recent(args.episodes)
+    all_eps = sorted(all_eps, key=lambda e: e.episode_id)
+    wins = [1 if e.outcome == "win" else 0 for e in all_eps]
     window = max(1, args.episodes // 10)
-    first = sum(r.won for r in reports[:window]) / window
-    last = sum(r.won for r in reports[-window:]) / window
+    first = sum(wins[:window]) / max(1, len(wins[:window]))
+    last = sum(wins[-window:]) / max(1, len(wins[-window:]))
     grown = skills.all()
+    recoveries = sum(1 for r in audit.history() if r.kind == "skill.demotion")
 
-    print(f"episodes         : {args.episodes}  (contexts={args.contexts}, actions={args.actions})")
+    print(f"episodes         : {len(all_eps)}  (contexts={args.contexts}, actions={args.actions})")
     print(f"win rate  first {window:>4}: {first:.2%}")
     print(f"win rate  last  {window:>4}: {last:.2%}")
     print(f"skills grown     : {len(grown)}")
@@ -250,10 +351,9 @@ def main() -> None:
         print(f"  - {s.name}  (confidence={s.confidence:.2f}, from {len(s.provenance)} games)")
     mastered = [e for e in self_model.all() if e.mastered]
     print(f"contexts mastered: {len(mastered)} / {args.contexts}  (self-model)")
-    recoveries = sum(1 for r in reports if r.recovered)
     print(f"drifts / recover : {env.drifts} / {recoveries}  (reward-surprise)")
     print(f"audit ledger ok  : {audit.verify()}  ({len(audit.history())} records)")
-    print(f"(temporary stores under {tmp})")
+    print(f"({'persistent' if persistent else 'temporary'} stores under {root})")
 
 
 if __name__ == "__main__":

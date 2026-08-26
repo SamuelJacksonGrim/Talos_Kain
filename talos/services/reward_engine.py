@@ -52,6 +52,11 @@ class RewardEngine:
     def value(self, context_id: str, action_id: int) -> float:
         return self._value.get((context_id, action_id), 0.0)
 
+    def known_pairs(self) -> int:
+        """How many (context, action) values are currently tracked. Used by the
+        resume path as a receipt that the value table was rebuilt from the log."""
+        return len(self._value)
+
     def is_surprise(self, prediction_error: float) -> bool:
         """True when a confidently-good action failed. Only actions whose value
         had climbed above the threshold can produce a drop this steep, so blind
