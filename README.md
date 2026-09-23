@@ -5,6 +5,15 @@
 [![Python](https://img.shields.io/badge/python-%3E%3D3.10-3776AB?logo=python&logoColor=white)](https://www.python.org)
 ![status](https://img.shields.io/badge/status-alpha-success)
 
+## License
+
+This project is dual-licensed under **AGPL-3.0-only** OR a commercial license.
+
+- [LICENSE](LICENSE) — GNU AGPL-3.0-only (the free track)
+- [LICENSING.md](LICENSING.md) — how the two tracks work
+- [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) — the commercial agreement
+- [NOTICE](NOTICE) — copyright, SPDX identifier, and provenance
+
 
 **The organism.** An autonomous-agent harness that gets better at something by
 failing at it — repeatedly, unattended, over a long time — and can point at the
@@ -156,7 +165,3 @@ archetype of the agent who acts *on its own*, against the design. Together they
 name the tightrope this architecture exists to walk: *autonomous enough to
 matter, governed enough to trust.*
 
-## License
-
-AGPL-3.0-only, or a commercial license ([LICENSING.md](LICENSING.md)). See `CONTRIBUTING.md` for the
-dual-license grant-back.
