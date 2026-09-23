@@ -1,5 +1,11 @@
 # Talos_Kain
 
+[![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue)](LICENSE)
+[![dual-license](https://img.shields.io/badge/dual--license-AGPL--3.0--only%20or%20commercial-blueviolet)](LICENSING.md)
+[![Python](https://img.shields.io/badge/python-%3E%3D3.10-3776AB?logo=python&logoColor=white)](https://www.python.org)
+![status](https://img.shields.io/badge/status-alpha-success)
+
+
 **The organism.** An autonomous-agent harness that gets better at something by
 failing at it — repeatedly, unattended, over a long time — and can point at the
 named skill it grew. The body and nervous system that wraps a cognitive *mind*
@@ -152,5 +158,5 @@ matter, governed enough to trust.*
 
 ## License
 
-AGPL-3.0. Commercial terms available on request; see `CONTRIBUTING.md` for the
+AGPL-3.0-only, or a commercial license ([LICENSING.md](LICENSING.md)). See `CONTRIBUTING.md` for the
 dual-license grant-back.
